@@ -1,3 +1,5 @@
+const { NotFoundError } = require("../customErrors");
+
 let slides = [];
 
 const createSlide = async (slide) => {
@@ -13,10 +15,19 @@ const deleteSlide = async (presentationTitle, index) => {
 
 const updateSlide = async (presentationTitle, index, updatedFields) => {
     const arrIndex = slides.findIndex(s => (s.presentationTitle == presentationTitle && s.index == index));
+
+    if (arrIndex == -1) {
+        throw new NotFoundError("Failed to update slide since one with this presentationTitle and index was not found", {
+            presentationTitle,
+            index
+        });
+    }
+
     slides[arrIndex] = {
         ...slides[arrIndex],
         ...updatedFields
     };
+
     return slides[arrIndex]
 }
 

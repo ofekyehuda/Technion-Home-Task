@@ -1,3 +1,5 @@
+const { NotFoundError } = require("../customErrors");
+
 let presentaions = [];
 
 const getAllPresentations = async () => {
@@ -22,10 +24,18 @@ const getPresentationByTitle = async (title) => {
 
 const updatePresentation = async (title, updatedFields) => {
     const index = presentaions.findIndex(p => p.title == title);
+
+    if (index == -1) {
+        throw new NotFoundError("Failed to update presentation since one with this title was not found", {
+            title
+        });
+    }
+
     presentaions[index] = {
         ...presentaions[index],
         ...updatedFields
     };
+
     return presentaions[index];
 }
 
