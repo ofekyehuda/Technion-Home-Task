@@ -1,5 +1,10 @@
 const express = require("express");
 const { StatusCodes } = require("http-status-codes");
+const {
+    createPresentationBodySchema,
+    patchPresentationBodySchema
+} = require("./presentationValidation");
+const { validateRequest } = require("../middlewares/validateRequest");
 
 const presentationsRouter = express.Router();
 const PresentationsBL = require("./presentationsBL");
@@ -16,20 +21,24 @@ presentationsRouter.get('/', async (req, res, next) => {
 });
 
 // Creating a new presentation
-presentationsRouter.post('/', async (req, res, next) => {
-    try {
-        const presentation = {
-            title: req.body.title,
-            authorsList: req.body.authorsList,
-            dateOfPublishment: new Date(req.body.dateOfPublishment)
-        };
+presentationsRouter.post(
+    '/',
+    validateRequest(createPresentationBodySchema),
+    async (req, res, next) => {
+        try {
+            const presentation = {
+                title: req.body.title,
+                authorsList: req.body.authorsList,
+                dateOfPublishment: req.body.dateOfPublishment
+            };
 
-        const newPresentation = await PresentationsBL.createPresentation(presentation);
-        res.status(StatusCodes.OK).json(newPresentation);
-    } catch (err) {
-        next(err);
+            const newPresentation = await PresentationsBL.createPresentation(presentation);
+            res.status(StatusCodes.OK).json(newPresentation);
+        } catch (err) {
+            next(err);
+        }
     }
-});
+);
 
 // Deleting a presentation by its title
 presentationsRouter.delete('/:title', async (req, res, next) => {
@@ -67,15 +76,19 @@ presentationsRouter.get('/:title', async (req, res, next) => {
 });
 
 // Altering the Authors List
-presentationsRouter.patch('/:title', async (req, res, next) => {
-    try {
-        const updatedPresentation = await PresentationsBL.updateAuthorList(req.params.title, req.body.authorsList);
-        res.status(StatusCodes.OK).send(updatedPresentation);
+presentationsRouter.patch(
+    '/:title',
+    validateRequest(patchPresentationBodySchema),
+    async (req, res, next) => {
+        try {
+            const updatedPresentation = await PresentationsBL.updateAuthorList(req.params.title, req.body.authorsList);
+            res.status(StatusCodes.OK).send(updatedPresentation);
+        }
+        catch (err) {
+            next(err);
+        }
     }
-    catch (err) {
-        next(err);
-    }
-});
+);
 
 module.exports = {
     presentationsRouter

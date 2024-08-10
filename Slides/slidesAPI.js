@@ -2,18 +2,25 @@ const express = require("express");
 const slidesRouter = express.Router({ mergeParams: true });
 const { StatusCodes } = require("http-status-codes");
 const { NotFoundError } = require("../customErrors");
+const { validateRequest } = require("../middlewares/validateRequest");
+const {
+    alteringSlideBodySchema,
+    createSlideBodySchema
+} = require("./slideValidation")
 
 const SlidesBL = require("./slidesBL");
 
 // Creating a slide
-slidesRouter.post('/', async (req, res, next) => {
-    try {
-        const slide = await SlidesBL.createSlide(req.params.presentationTitle, req.body);
-        res.status(StatusCodes.OK).json(slide);
-    } catch (err) {
-        next(err);
-    }
-})
+slidesRouter.post('/',
+    validateRequest(createSlideBodySchema),
+    async (req, res, next) => {
+        try {
+            const slide = await SlidesBL.createSlide(req.params.presentationTitle, req.body);
+            res.status(StatusCodes.OK).json(slide);
+        } catch (err) {
+            next(err);
+        }
+    })
 
 // Deleting a slide by its index
 slidesRouter.delete('/:index', async (req, res, next) => {
@@ -26,7 +33,7 @@ slidesRouter.delete('/:index', async (req, res, next) => {
                 index: req.params.index
             });
         }
-        
+
         res.status(StatusCodes.OK).send(isDeleted)
     } catch (err) {
         next(err);
@@ -34,16 +41,18 @@ slidesRouter.delete('/:index', async (req, res, next) => {
 })
 
 // Altering a Slide 
-slidesRouter.put('/:index', async (req, res, next) => {
-    try {
-        const slide = await SlidesBL.updateSlide(req.params.presentationTitle, req.params.index, req.body)
+slidesRouter.put('/:index',
+    validateRequest(alteringSlideBodySchema),
+    async (req, res, next) => {
+        try {
+            const slide = await SlidesBL.updateSlide(req.params.presentationTitle, req.params.index, req.body)
 
-        res.status(StatusCodes.OK).send(slide)
+            res.status(StatusCodes.OK).send(slide)
 
-    } catch (err) {
-        next(err);
-    }
-})
+        } catch (err) {
+            next(err);
+        }
+    })
 
 module.exports = {
     slidesRouter
