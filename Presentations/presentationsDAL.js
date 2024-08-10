@@ -1,39 +1,43 @@
-const { getDb } = require("../dbService");
-
-const COLLECTION_NAME = "presentations";
+const { BadRequestError } = require("../customErrors");
+const { getDb, COLLECTIONS } = require("../dbService");
 
 const getAllPresentations = async () => {
     const db = await getDb();
-    const presentations = await db.collection(COLLECTION_NAME).find({}).toArray();
+    const presentations = await db.collection(COLLECTIONS.PRESENTATIONS).find({}).toArray();
     return presentations;
 }
 
 const createPresentation = async (presentation) => {
     const db = await getDb();
-    const result = await db.collection(COLLECTION_NAME).insertOne(presentation);
-
-    return {
-        _id: result.insertedId,
-        ...presentation
+    
+    try {
+        const result = await db.collection(COLLECTIONS.PRESENTATIONS).insertOne(presentation);
+    
+        return {
+            _id: result.insertedId,
+            ...presentation
+        }
+    } catch (err) {
+        throw new BadRequestError("The 'title' field must be unique", { title: presentation.title });
     }
 }
 
 const deletePresentation = async (title) => {
     const db = await getDb();
-    const result = await db.collection(COLLECTION_NAME).deleteOne({ title });
+    const result = await db.collection(COLLECTIONS.PRESENTATIONS).deleteOne({ title });
 
     return Boolean(result.deletedCount);
 }
 
 const getPresentationByTitle = async (title) => {
     const db = await getDb();
-    const presentation = await db.collection(COLLECTION_NAME).findOne({ title });
+    const presentation = await db.collection(COLLECTIONS.PRESENTATIONS).findOne({ title });
     return presentation;
 }
 
 const updatePresentation = async (title, updatedFields) => {
     const db = await getDb();
-    const result = await db.collection(COLLECTION_NAME).updateOne(
+    const result = await db.collection(COLLECTIONS.PRESENTATIONS).updateOne(
         { title },
         {
             $set: {

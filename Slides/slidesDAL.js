@@ -1,28 +1,43 @@
-const { NotFoundError } = require("../customErrors");
-const { getDb } = require("../dbService");
-
-const COLLECTION_NAME = "slides";
+const { getPresentationByTitle } = require("../Presentations/presentationsDAL");
+const { NotFoundError, BadRequestError } = require("../customErrors");
+const { getDb, COLLECTIONS } = require("../dbService");
 
 const createSlide = async (slide) => {
-    const db = await getDb();
-    const result = await db.collection(COLLECTION_NAME).insertOne(slide);
+    const presentation = await getPresentationByTitle(slide.presentationTitle);
 
-    return {
-        _id: result.insertedId,
-        ...slide
+    if (!presentation) {
+        throw new BadRequestError("Cant create slide since its presentationTitle doesn't exist", {
+            presentationTitle: slide.presentationTitle
+        });
+    }
+
+    const db = await getDb();
+
+    try {
+        const result = await db.collection(COLLECTIONS.SLIDES).insertOne(slide);
+    
+        return {
+            _id: result.insertedId,
+            ...slide
+        }
+    } catch (err) {
+        throw new BadRequestError("The combination of 'presentationTitle' and 'index' fields must be unique", { 
+            presentationTitle: slide.presentationTitle, 
+            index: slide.index 
+        });
     }
 }
 
 const deleteSlide = async (presentationTitle, index) => {
     const db = await getDb();
-    const result = await db.collection(COLLECTION_NAME).deleteOne({ presentationTitle, index });
+    const result = await db.collection(COLLECTIONS.SLIDES).deleteOne({ presentationTitle, index });
 
     return Boolean(result.deletedCount);
 }
 
 const updateSlide = async (presentationTitle, index, updatedFields) => {
     const db = await getDb();
-    const result = await db.collection(COLLECTION_NAME).updateOne(
+    const result = await db.collection(COLLECTIONS.SLIDES).updateOne(
         { presentationTitle, index },
         {
             $set: {
