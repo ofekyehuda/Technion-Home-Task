@@ -25,7 +25,10 @@ slidesRouter.post('/',
 // Deleting a slide by its index
 slidesRouter.delete('/:index', async (req, res, next) => {
     try {
-        const isDeleted = await SlidesBL.deleteSlide(req.params.presentationTitle, req.params.index);
+        const isDeleted = await SlidesBL.deleteSlide(
+            req.params.presentationTitle, 
+            parseInt(req.params.index)
+        );
 
         if (!isDeleted) {
             throw new NotFoundError("Failed to delete slide since one with this title was not found", {
@@ -45,7 +48,11 @@ slidesRouter.put('/:index',
     validateRequest(alteringSlideBodySchema),
     async (req, res, next) => {
         try {
-            const slide = await SlidesBL.updateSlide(req.params.presentationTitle, req.params.index, req.body)
+            const slide = await SlidesBL.updateSlide(
+                req.params.presentationTitle, 
+                parseInt(req.params.index), 
+                req.body
+            );
 
             res.status(StatusCodes.OK).send(slide)
 

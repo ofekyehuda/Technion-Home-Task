@@ -1,42 +1,48 @@
-const { NotFoundError } = require("../customErrors");
+const { getDb } = require("../dbService");
 
-let presentaions = [];
+const COLLECTION_NAME = "presentations";
 
 const getAllPresentations = async () => {
-    return presentaions;
+    const db = await getDb();
+    const presentations = await db.collection(COLLECTION_NAME).find({}).toArray();
+    return presentations;
 }
 
 const createPresentation = async (presentation) => {
-    presentaions.push(presentation);
-    return presentation;
+    const db = await getDb();
+    const result = await db.collection(COLLECTION_NAME).insertOne(presentation);
+
+    return {
+        _id: result.insertedId,
+        ...presentation
+    }
 }
 
 const deletePresentation = async (title) => {
-    const presentationsCount = presentaions.length;
-    presentaions = presentaions.filter(p => p.title != title);
-    return Boolean(presentationsCount - presentaions.length);
+    const db = await getDb();
+    const result = await db.collection(COLLECTION_NAME).deleteOne({ title });
+
+    return Boolean(result.deletedCount);
 }
 
 const getPresentationByTitle = async (title) => {
-    const presentation = presentaions.find(p => p.title == title);
+    const db = await getDb();
+    const presentation = await db.collection(COLLECTION_NAME).findOne({ title });
     return presentation;
 }
 
 const updatePresentation = async (title, updatedFields) => {
-    const index = presentaions.findIndex(p => p.title == title);
+    const db = await getDb();
+    const result = await db.collection(COLLECTION_NAME).updateOne(
+        { title },
+        {
+            $set: {
+                ...updatedFields
+            }
+        }
+    );
 
-    if (index == -1) {
-        throw new NotFoundError("Failed to update presentation since one with this title was not found", {
-            title
-        });
-    }
-
-    presentaions[index] = {
-        ...presentaions[index],
-        ...updatedFields
-    };
-
-    return presentaions[index];
+    return Boolean(result.modifiedCount);
 }
 
 module.exports = {

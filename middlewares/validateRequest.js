@@ -8,7 +8,7 @@ const validateRequest = (zodSchema) => {
         if (!result.success) {
             next(new BadRequestError(
                 "Bad Request: the request's body did not match the expected schema",
-                result.error.flatten().fieldErrors,
+                result.error.flatten(),
             ));
         } else {
             req.body = result.data;

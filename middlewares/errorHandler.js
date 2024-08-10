@@ -2,6 +2,8 @@ const { BadRequestError, NotFoundError } = require("../customErrors");
 const { StatusCodes } = require("http-status-codes");
 
 const errorHandler = (err, req, res, next) => {
+    console.error(err);
+    
     if (err instanceof BadRequestError) {
         return res.status(StatusCodes.BAD_REQUEST).json(err.data);
     } else if (err instanceof NotFoundError) {

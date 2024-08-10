@@ -1,34 +1,37 @@
 const { NotFoundError } = require("../customErrors");
+const { getDb } = require("../dbService");
 
-let slides = [];
+const COLLECTION_NAME = "slides";
 
 const createSlide = async (slide) => {
-    slides.push(slide);
-    return slide;
+    const db = await getDb();
+    const result = await db.collection(COLLECTION_NAME).insertOne(slide);
+
+    return {
+        _id: result.insertedId,
+        ...slide
+    }
 }
 
 const deleteSlide = async (presentationTitle, index) => {
-    const slidesCount = slides.length;
-    slides = slides.filter(s => (s.presentationTitle != presentationTitle && s.index != index));
-    return Boolean(slidesCount - slides.length);
+    const db = await getDb();
+    const result = await db.collection(COLLECTION_NAME).deleteOne({ presentationTitle, index });
+
+    return Boolean(result.deletedCount);
 }
 
 const updateSlide = async (presentationTitle, index, updatedFields) => {
-    const arrIndex = slides.findIndex(s => (s.presentationTitle == presentationTitle && s.index == index));
+    const db = await getDb();
+    const result = await db.collection(COLLECTION_NAME).updateOne(
+        { presentationTitle, index },
+        {
+            $set: {
+                ...updatedFields
+            }
+        }
+    );
 
-    if (arrIndex == -1) {
-        throw new NotFoundError("Failed to update slide since one with this presentationTitle and index was not found", {
-            presentationTitle,
-            index
-        });
-    }
-
-    slides[arrIndex] = {
-        ...slides[arrIndex],
-        ...updatedFields
-    };
-
-    return slides[arrIndex]
+    return Boolean(result.modifiedCount);
 }
 
 module.exports = {
